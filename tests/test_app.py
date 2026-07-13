@@ -199,7 +199,7 @@ class TestHexagonalApp(unittest.TestCase):
             self.assertEqual(imported, 1)
             client = self.app.client_service.get_client_by_cedula("999888777")
             self.assertIsNotNone(client)
-            self.assertEqual(client.nombre, "Cliente JSON Test")
+            self.assertEqual(client.nombre, "Cliente Json Test")
             self.assertEqual(client.valor_a_descontar, 0.0)
 
         os.remove(path)
@@ -246,6 +246,19 @@ class TestHexagonalApp(unittest.TestCase):
             purchases = self.app.purchase_service.get_purchases_by_client(client.id)
             self.assertTrue(any(p.concepto == "Almuerzo Confirmado" for p in purchases))
 
+    def test_13_client_name_capitalization(self):
+        with self.app.app_context():
+            client = self.app.client_service.register_client(
+                "jose  alejandro rios  mejia", "99887766", "Pool de Ambulancia", 0.0
+            )
+            self.assertEqual(client.nombre, "Jose  Alejandro Rios  Mejia")
+
+            updated = self.app.client_service.update_client(
+                client.id, "maria  alejandra lopez", "99887766", "Pool de Ambulancia", 0.0
+            )
+            self.assertEqual(updated.nombre, "Maria  Alejandra Lopez")
+
 
 if __name__ == "__main__":
     unittest.main()
+

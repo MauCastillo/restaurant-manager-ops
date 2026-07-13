@@ -22,6 +22,17 @@ class Client:
     id: Optional[int] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
 
+    @staticmethod
+    def format_nombre(nombre: str) -> str:
+        """Transform client name so the first letter of each word is capitalized."""
+        if not nombre:
+            return ""
+        return " ".join(w.capitalize() for w in str(nombre).strip().split(" "))
+
+    def __post_init__(self):
+        if self.nombre:
+            self.nombre = self.format_nombre(self.nombre)
+
     def format_valor(self) -> str:
         """Return formatted currency representation of valor_a_descontar."""
         return f"${self.valor_a_descontar:,.2f}"

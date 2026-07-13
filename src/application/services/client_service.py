@@ -40,7 +40,7 @@ class ClientService(ClientServicePort):
             if existing and existing.id != client_id:
                 raise DuplicateEntityException(f"La cédula '{cedula_clean}' ya está en uso por otro cliente.")
 
-        client.nombre = nombre.strip()
+        client.nombre = Client.format_nombre(nombre)
         client.cedula = cedula_clean
         client.proceso_desempeno = proceso_desempeno.strip()
         client.valor_a_descontar = float(valor_a_descontar)
@@ -107,7 +107,7 @@ class ClientService(ClientServicePort):
             existing = self.client_repo.find_by_cedula(cedula)
             if existing:
                 # Update existing client data if needed
-                existing.nombre = nombre
+                existing.nombre = Client.format_nombre(nombre)
                 existing.proceso_desempeno = proceso
                 existing.valor_a_descontar = valor
                 self.client_repo.save(existing)
@@ -155,7 +155,7 @@ class ClientService(ClientServicePort):
 
             existing = self.client_repo.find_by_cedula(cedula)
             if existing:
-                existing.nombre = nombre
+                existing.nombre = Client.format_nombre(nombre)
                 existing.proceso_desempeno = proceso
                 self.client_repo.save(existing)
                 skipped += 1
