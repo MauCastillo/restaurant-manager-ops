@@ -258,7 +258,25 @@ class TestHexagonalApp(unittest.TestCase):
             )
             self.assertEqual(updated.nombre, "Maria  Alejandra Lopez")
 
+    def test_14_report_excludes_zero_discount_clients(self):
+        with self.app.app_context():
+            # Create a client with 0 base discount and no purchases
+            zero_client = self.app.client_service.register_client(
+                "Cliente Cero Descuento", "00000001", "Pool de Ambulancia", 0.0
+            )
+            # Create a client with non-zero discount
+            active_client = self.app.client_service.register_client(
+                "Cliente Activo Descuento", "00000002", "Pool de Ambulancia", 50000.0
+            )
+
+            report_rows = self.app.report_service.generate_report_data("2026-01-01", "2026-12-31")
+            row_ids = [r["client_id"] for r in report_rows]
+
+            self.assertNotIn(zero_client.id, row_ids)
+            self.assertIn(active_client.id, row_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

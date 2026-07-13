@@ -86,15 +86,16 @@ class ReportService(ReportServicePort):
             # If the client has base discount or purchases, we include their total
             total_descontar = c.valor_a_descontar + period_monto
 
-            rows.append({
-                "client_id": c.id,
-                "nombre": c.nombre,
-                "cedula": c.cedula,
-                "proceso_desempeno": c.proceso_desempeno,
-                "valor_a_descontar": total_descontar,
-                "period_monto": period_monto,
-                "base_descuento": c.valor_a_descontar
-            })
+            if abs(total_descontar) > 1e-6:
+                rows.append({
+                    "client_id": c.id,
+                    "nombre": c.nombre,
+                    "cedula": c.cedula,
+                    "proceso_desempeno": c.proceso_desempeno,
+                    "valor_a_descontar": total_descontar,
+                    "period_monto": period_monto,
+                    "base_descuento": c.valor_a_descontar
+                })
 
         # Sort by nombre
         rows.sort(key=lambda x: x["nombre"].lower())
