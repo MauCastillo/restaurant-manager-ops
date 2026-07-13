@@ -165,3 +165,37 @@ Para ejecutar la suite de pruebas unitarias:
 ```bash
 python3 -m unittest tests/test_app.py
 ```
+
+---
+
+## 🖥️ Empaquetado para Windows 11 como Aplicación de Escritorio Nativa (Estrategia A)
+
+El proyecto está listo para compilarse como una **Aplicación de Escritorio Nativa (Web Desktop Application)** en **Windows 11** mediante **`pywebview` + PyInstaller** ([`desktop_app.py`](file:///Users/mao/Documents/Github/restaurant-manager-ops/desktop_app.py) y [`HexOPS.spec`](file:///Users/mao/Documents/Github/restaurant-manager-ops/HexOPS.spec)). Esto permite al usuario final abrir la aplicación haciendo doble clic en un archivo `.exe` sin necesidad de instalar Python ni abrir el navegador web tradicional.
+
+### 1. Requisitos Previos en Windows 11
+En tu entorno de Windows 11 con Python instalado:
+```cmd
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install pywebview pyinstaller
+```
+
+### 2. Construir la Aplicación con PyInstaller
+Ejecuta el comando de compilación utilizando el archivo de especificación preconfigurado:
+```cmd
+pyinstaller HexOPS.spec --clean
+```
+Al finalizar, PyInstaller creará una carpeta en `dist/HexOPS_Manager/` con el ejecutable **`HexOPS_Manager.exe`**.
+
+### 3. ¿Qué ocurre con el archivo `.env` en Windows compilado?
+¡El archivo **`.env` sigue siendo totalmente configurable** sin tener que recompilar el `.exe`!
+
+- La aplicación está programada en [`config.py`](file:///Users/mao/Documents/Github/restaurant-manager-ops/config.py) para detectar cuándo se ejecuta en modo compilado (`sys.frozen`).
+- Al iniciar `HexOPS_Manager.exe`, el sistema buscará un archivo **`.env` situado en la misma carpeta donde se encuentra el ejecutable** (`dist/HexOPS_Manager/.env`).
+- **Instrucción para distribución:** Cuando entregues o instales la carpeta de la aplicación en la PC de Windows 11, copia tu archivo `.env` (o crea uno a partir de `.env.example`) directamente al lado de `HexOPS_Manager.exe`:
+  ```ini
+  GEMINI_API_KEY=tu_clave_api_de_google_gemini
+  GEMINI_MODEL=gemini-flash-lite-latest
+  SECRET_KEY=tu_clave_secreta
+  ```
+- Si deseas cambiar la clave de API o cualquier configuración en el futuro, basta con editar el archivo `.env` con el Bloc de notas y reiniciar el `.exe`. Asimismo, la base de datos local SQLite se persistirá automáticamente dentro de la subcarpeta `instance/app.db` junto al ejecutable.

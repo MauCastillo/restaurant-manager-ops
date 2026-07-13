@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#10B981" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Hexagon Outer Border -->
+  <polygon points="256,24 456,138 456,374 256,488 56,374 56,138" fill="url(#hexGrad)" filter="url(#shadow)" />
+  <!-- Hexagon Inner Core -->
+  <polygon points="256,48 436,152 436,360 256,464 76,360 76,152" fill="url(#innerGrad)" />
+
+  <!-- Inner Decorative Hexagon Outline -->
+  <polygon points="256,84 396,165 396,347 256,428 116,347 116,165" fill="none" stroke="url(#hexGrad)" stroke-width="6" opacity="0.4" />
+
+  <!-- Emblem / AI & Operations Symbol (H / Nodes) -->
+  <g transform="translate(0, 8)">
+    <path d="M 186 190 L 186 310" stroke="#10B981" stroke-width="24" stroke-linecap="round" />
+    <path d="M 326 190 L 326 310" stroke="#06B6D4" stroke-width="24" stroke-linecap="round" />
+    <path d="M 186 250 L 326 250" stroke="url(#hexGrad)" stroke-width="24" stroke-linecap="round" />
+    
+    <!-- Nodes -->
+    <circle cx="186" cy="180" r="14" fill="#10B981" />
+    <circle cx="186" cy="320" r="14" fill="#10B981" />
+    <circle cx="326" cy="180" r="14" fill="#06B6D4" />
+    <circle cx="326" cy="320" r="14" fill="#06B6D4" />
+    <circle cx="256" cy="250" r="16" fill="#FFF" />
+  </g>
+</svg>

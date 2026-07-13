@@ -30,7 +30,12 @@ def create_app(config_class=None):
     if config_class is None:
         config_class = get_config()
 
-    app = Flask(__name__)
+    from config import BASE_DIR
+    app = Flask(
+        __name__,
+        template_folder=str(BASE_DIR / "templates"),
+        static_folder=str(BASE_DIR / "static")
+    )
     app.config.from_object(config_class)
 
     # Initialize SQLite Connection Manager & Infrastructure Adapters
@@ -59,7 +64,7 @@ def create_app(config_class=None):
 
     # Seed initial data on startup if database is fresh
     with app.app_context():
-        seed_all(app.config["DATABASE_PATH"], app.config["DEFAULT_CONSULTA_HTML_PATH"])
+        seed_all(app.config.get("DATABASE_PATH"))
 
     @app.before_request
     def load_logged_in_user():
