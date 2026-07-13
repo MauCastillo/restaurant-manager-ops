@@ -84,6 +84,20 @@
     border-bottom: 2px solid rgba(15, 23, 42, 0.18);
 }
 
+[data-theme="light"] .table td {
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+}
+
+[data-theme="light"] .table td a:not(.btn) {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+[data-theme="light"] .table td a:not(.btn):hover {
+    color: #059669;
+}
+
 [data-theme="light"] .table tr:hover {
     background: rgba(5, 150, 105, 0.06);
 }
@@ -447,6 +461,18 @@ a {
     padding: 1.1rem 1.25rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     color: var(--text-primary);
+}
+
+.table td a:not(.btn) {
+    color: var(--text-primary);
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.table td a:not(.btn):hover {
+    color: var(--accent-primary);
+    text-decoration: underline;
 }
 
 .table tr:hover td {

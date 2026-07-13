@@ -45,14 +45,14 @@
                 <tr>
                     <td class="mono">{{ loop.index }}</td>
                     <td>
-                        <a href="{{ url_for('clients.detail_client', client_id=client.id) }}" style="color: #fff; font-weight:700;">
+                        <a href="{{ url_for('clients.detail_client', client_id=client.id) }}" style="color: var(--text-primary); font-weight:700;">
                             {{ client.nombre }}
                         </a>
                     </td>
                     <td class="mono">{{ client.cedula }}</td>
                     <td><span class="badge badge-emerald">{{ client.proceso_desempeno }}</span></td>
                     <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-secondary);">
-                        ${{ "{:,.2f}".format(client.valor_a_descontar) }}
+                        ${{ "{:,.0f}".format(client.valor_a_descontar) }}
                     </td>
                     <td style="text-align: right;">
                         <a href="{{ url_for('clients.detail_client', client_id=client.id) }}" class="btn btn-outline btn-sm">

@@ -54,7 +54,7 @@
 
     <div class="kpi-card">
         <div class="kpi-label">Total Consolidado a Descontar</div>
-        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.2f}".format(total_monto) }}</div>
+        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.0f}".format(total_monto) }}</div>
         <div class="kpi-meta">Suma total del rango seleccionado</div>
     </div>
 </div>
@@ -85,7 +85,7 @@
                     <td class="mono">{{ row.cedula }}</td>
                     <td>{{ row.proceso_desempeno }}</td>
                     <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-primary);">
-                        ${{ "{:,.2f}".format(row.valor_a_descontar) }}
+                        ${{ "{:,.0f}".format(row.valor_a_descontar) }}
                     </td>
                 </tr>
                 {% else %}
@@ -113,7 +113,12 @@
 
             <div class="form-group">
                 <label class="form-label">Destinatario (Para)</label>
-                <input type="email" name="to_email" class="form-control" placeholder="ej. auxiliarnominaagesoc@outlook.com" required>
+                <input type="email" name="to_email" class="form-control" value="auxiliarnominaagesoc@outlook.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">CCO (Copia Oculta — separados por coma)</label>
+                <input type="text" name="bcc_email" class="form-control" value="mauroctm7@gmail.com, camim8852@gmail.com">
             </div>
 
             <div class="form-group">
@@ -124,25 +129,6 @@
             <div class="form-group">
                 <label class="form-label">Cuerpo del Mensaje</label>
                 <textarea name="body_text" class="form-control" rows="7" required>{{ default_body }}</textarea>
-            </div>
-
-            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.4rem;">
-                <p style="font-size: 0.85rem; font-weight: 600; color: var(--accent-secondary); margin-bottom: 0.5rem;">
-                    🔐 Configuración Remitente Gmail (SMTP Seguro)
-                </p>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <label class="form-label" style="font-size:0.8rem;">Tu Correo Gmail</label>
-                        <input type="email" name="sender_email" class="form-control" placeholder="oliviaminav@gmail.com">
-                    </div>
-                    <div>
-                        <label class="form-label" style="font-size:0.8rem;">Contraseña de Aplicación (App Password)</label>
-                        <input type="password" name="sender_password" class="form-control" placeholder="16 caracteres de Google">
-                    </div>
-                </div>
-                <p style="font-size:0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
-                    *Si dejas vacío, el servidor utilizará las variables de entorno SMTP_USER / SMTP_PASSWORD configuradas en Render o tu archivo .env.
-                </p>
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap: 0.75rem;">

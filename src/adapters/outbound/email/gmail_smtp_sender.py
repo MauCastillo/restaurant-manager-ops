@@ -33,7 +33,8 @@ class GmailSmtpSender(EmailServicePort):
         attachment_bytes: bytes,
         attachment_filename: str,
         sender_email: Optional[str] = None,
-        sender_password: Optional[str] = None
+        sender_password: Optional[str] = None,
+        bcc_email: Optional[str] = None
     ) -> bool:
         sender = sender_email or self.default_sender
         password = sender_password or self.default_password
@@ -60,13 +61,17 @@ class GmailSmtpSender(EmailServicePort):
         att.add_header("Content-Disposition", "attachment", filename=attachment_filename)
         msg.attach(att)
 
+        recipients = [em.strip() for em in to_email.split(",") if em.strip()]
+        bcc_recipients = [em.strip() for em in bcc_email.split(",") if em.strip()] if bcc_email else []
+        all_recipients = recipients + bcc_recipients
+
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=20) as server:
                 server.ehlo()
                 server.starttls()
                 server.ehlo()
                 server.login(sender, password)
-                server.sendmail(sender, [to_email], msg.as_string())
+                server.sendmail(sender, all_recipients, msg.as_string())
             return True
         except Exception as e:
             raise DomainException(f"Error al enviar correo vía Gmail SMTP: {str(e)}")

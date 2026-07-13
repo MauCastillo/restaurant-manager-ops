@@ -15,7 +15,8 @@ class EmailServicePort(ABC):
         attachment_bytes: bytes,
         attachment_filename: str,
         sender_email: Optional[str] = None,
-        sender_password: Optional[str] = None
+        sender_password: Optional[str] = None,
+        bcc_email: Optional[str] = None
     ) -> bool:
         """Send an email with an attachment via SMTP. Returns True if successful."""
         pass

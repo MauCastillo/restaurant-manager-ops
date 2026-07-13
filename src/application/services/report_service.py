@@ -115,7 +115,8 @@ class ReportService(ReportServicePort):
         subject: str,
         body_text: str,
         sender_email: Optional[str] = None,
-        sender_password: Optional[str] = None
+        sender_password: Optional[str] = None,
+        bcc_email: Optional[str] = None
     ) -> str:
         excel_bytes, filename = self.generate_report_excel(start_date, end_date)
 
@@ -132,7 +133,8 @@ class ReportService(ReportServicePort):
             attachment_bytes=excel_bytes,
             attachment_filename=filename,
             sender_email=sender_email,
-            sender_password=sender_password
+            sender_password=sender_password,
+            bcc_email=bcc_email
         )
 
         if success:

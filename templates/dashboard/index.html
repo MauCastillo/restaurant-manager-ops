@@ -23,19 +23,19 @@
 
     <div class="kpi-card">
         <div class="kpi-label">Valor Base a Descontar</div>
-        <div class="kpi-value" style="color: var(--accent-secondary);">${{ "{:,.2f}".format(total_base_descuento) }}</div>
+        <div class="kpi-value" style="color: var(--accent-secondary);">${{ "{:,.0f}".format(total_base_descuento) }}</div>
         <div class="kpi-meta">Acumulado inicial de Consulta.html</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Total Compras Registradas</div>
-        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.2f}".format(total_compras_monto) }}</div>
+        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.0f}".format(total_compras_monto) }}</div>
         <div class="kpi-meta">Nuevas transacciones / compras</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Saldo Neto Consolidado</div>
-        <div class="kpi-value" style="color: #fff;">${{ "{:,.2f}".format(total_saldo_neto) }}</div>
+        <div class="kpi-value" style="color: var(--text-primary);">${{ "{:,.0f}".format(total_saldo_neto) }}</div>
         <div class="kpi-meta">Descuento base + Compras</div>
     </div>
 </div>
@@ -75,7 +75,7 @@
                         <td>{{ p.concepto }}</td>
                         <td class="mono">{{ p.fecha_compra }}</td>
                         <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-primary);">
-                            ${{ "{:,.2f}".format(p.monto) }}
+                            ${{ "{:,.0f}".format(p.monto) }}
                         </td>
                     </tr>
                     {% endfor %}
@@ -108,7 +108,7 @@
                     <tr>
                         <td><strong>{{ proc }}</strong></td>
                         <td style="text-align:center;"><span class="badge badge-emerald">{{ info.clientes }}</span></td>
-                        <td class="mono" style="text-align:right;">${{ "{:,.2f}".format(info.monto) }}</td>
+                        <td class="mono" style="text-align:right;">${{ "{:,.0f}".format(info.monto) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

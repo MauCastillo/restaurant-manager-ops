@@ -151,7 +151,7 @@ class TestHexagonalApp(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         html = res.data.decode("utf-8")
         self.assertIn("CRONOLOGÍA Y BASE DE DESCUENTO DEL CLIENTE", html)
-        self.assertIn("18,500.00", html)
+        self.assertIn("18,500", html)
 
 
     def test_09_date_range_filtering(self):

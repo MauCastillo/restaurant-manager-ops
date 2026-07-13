@@ -71,7 +71,8 @@ def send_email():
     service = current_app.report_service
     start_date = request.form.get("start_date")
     end_date = request.form.get("end_date")
-    to_email = request.form.get("to_email", "").trim() if hasattr(request.form.get("to_email", ""), "trim") else request.form.get("to_email", "").strip()
+    to_email = request.form.get("to_email", "").strip()
+    bcc_email = request.form.get("bcc_email", "").strip() or None
     subject = request.form.get("subject", "").strip()
     body_text = request.form.get("body_text", "").strip()
     sender_email = request.form.get("sender_email", "").strip() or None
@@ -89,7 +90,8 @@ def send_email():
             subject=subject,
             body_text=body_text,
             sender_email=sender_email,
-            sender_password=sender_password
+            sender_password=sender_password,
+            bcc_email=bcc_email
         )
         flash(msg, "success")
     except DomainException as e:

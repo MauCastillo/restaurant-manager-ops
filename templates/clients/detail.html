@@ -18,19 +18,19 @@
 <div class="kpi-grid">
     <div class="kpi-card">
         <div class="kpi-label">Valor Base a Descontar</div>
-        <div class="kpi-value" style="color: var(--accent-secondary);">${{ "{:,.2f}".format(summary.base_descuento) }}</div>
+        <div class="kpi-value" style="color: var(--accent-secondary);">${{ "{:,.0f}".format(summary.base_descuento) }}</div>
         <div class="kpi-meta">Deducción de Consulta.html</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Total Compras Registradas</div>
-        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.2f}".format(summary.total_compras) }}</div>
+        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.0f}".format(summary.total_compras) }}</div>
         <div class="kpi-meta">{{ purchases|length }} transacciones</div>
     </div>
 
     <div class="kpi-card">
         <div class="kpi-label">Saldo Neto Consolidado</div>
-        <div class="kpi-value" style="color: #fff;">${{ "{:,.2f}".format(summary.saldo_neto) }}</div>
+        <div class="kpi-value" style="color: var(--text-primary);">${{ "{:,.0f}".format(summary.saldo_neto) }}</div>
         <div class="kpi-meta">Descuento base + Total compras</div>
     </div>
 </div>
@@ -57,7 +57,7 @@
         {% if fecha_inicio or fecha_fin %}
         <div style="margin-top: 0.85rem; display:flex; align-items:center; gap: 0.5rem;">
             <span class="badge badge-emerald" style="font-size: 0.85rem;">
-                📅 Filtro activo: {{ fecha_inicio or 'Inicio' }} hasta {{ fecha_fin or 'Presente' }} — {{ purchases|length }} transacciones (${{ "{:,.2f}".format(filtered_total) }})
+                📅 Filtro activo: {{ fecha_inicio or 'Inicio' }} hasta {{ fecha_fin or 'Presente' }} — {{ purchases|length }} transacciones (${{ "{:,.0f}".format(filtered_total) }})
             </span>
         </div>
         {% endif %}
@@ -95,7 +95,7 @@
                     <td class="mono" style="font-weight: 600;">Importación Base</td>
                     <td style="color: #cbd5e1;">Cuenta inicial del cliente</td>
                     <td class="mono" style="text-align: right; font-weight:800; color: var(--accent-secondary); font-size: 1.1rem;">
-                        ${{ "{:,.2f}".format(client.valor_a_descontar) }}
+                        ${{ "{:,.0f}".format(client.valor_a_descontar) }}
                     </td>
                     <td style="text-align: right;">
                         <span class="badge badge-cyan" style="font-size: 0.8rem;">Base Consulta.html</span>
@@ -109,7 +109,7 @@
                     <td class="mono">{{ purchase.fecha_compra }}</td>
                     <td>{{ purchase.notas or '-' }}</td>
                     <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-primary); font-size: 1.05rem;">
-                        ${{ "{:,.2f}".format(purchase.monto) }}
+                        ${{ "{:,.0f}".format(purchase.monto) }}
                     </td>
                     <td style="text-align: right;">
                         <form method="POST" action="{{ url_for('purchases.delete_purchase', purchase_id=purchase.id) }}" style="display:inline;" onsubmit="return confirm('¿Confirma eliminar este registro de compra?')">
@@ -126,7 +126,7 @@
                                 ✅ Registro Base del Cliente Cargado Correctamente
                             </div>
                             <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.4rem; line-height: 1.5;">
-                                El cliente cuenta con un descuento base de <strong style="color: var(--accent-secondary);">${{ "{:,.2f}".format(client.valor_a_descontar) }}</strong> importado desde <em>Consulta.html</em>. Aún no se han registrado consumos diarios adicionales para este periodo.
+                                El cliente cuenta con un descuento base de <strong style="color: var(--accent-secondary);">${{ "{:,.0f}".format(client.valor_a_descontar) }}</strong> importado desde <em>Consulta.html</em>. Aún no se han registrado consumos diarios adicionales para este periodo.
                             </p>
                             <button type="button" class="btn btn-primary" data-modal-target="clientPurchaseModal">
                                 🛒 + Registrar Primer Consumo para {{ client.nombre }}
