@@ -92,6 +92,12 @@
     filter: invert(30%) sepia(85%) saturate(500%) hue-rotate(130deg) brightness(0.9);
 }
 
+[data-theme="light"] .page-title {
+    background: linear-gradient(135deg, #0f172a 0%, #334155 75%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 /* Theme Toggle Button */
 .theme-toggle-btn {
     display: inline-flex;

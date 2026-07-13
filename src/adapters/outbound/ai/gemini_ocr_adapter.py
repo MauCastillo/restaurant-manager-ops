@@ -35,7 +35,7 @@ Analiza cuidadosamente esta fotografía que contiene escritura a mano (notas man
 Identifica cada renglón o transacción registrada y extrae un arreglo JSON donde cada elemento tenga exactamente estas claves:
 - "cliente_texto": El nombre, apellido o número de cédula escrito en la línea (ej. "Carlos Hurtado", "16848254", "Luis").
 - "concepto": El concepto o descripción del consumo o venta (ej. "Alimentación", "Almuerzo", "Desayuno", "Uniforme"). Si en el papel solo aparece el nombre y el valor sin concepto explícito, asigna "Alimentación".
-- "monto": El monto o valor monetario en número flotante positivo (ej. 15000.0, 20500.0). Elimina símbolos de peso o comas.
+- "monto": El monto o valor monetario en número entero positivo en pesos colombianos (ej. 15000, 20500). Elimina símbolos de peso, puntos o comas decimales.
 - "fecha": La fecha si aparece escrita en el papel en formato "YYYY-MM-DD" (o "2026-MM-DD" si se deduce el mes/día). Si no hay fecha visible, pon null.
 
 Devuelve EXCLUSIVAMENTE una lista JSON válida [] sin texto adicional ni bloques markdown extra.
@@ -110,7 +110,7 @@ Devuelve EXCLUSIVAMENTE una lista JSON válida [] sin texto adicional ni bloques
                         results.append({
                             "cliente_texto": str(item.get("cliente_texto") or "").strip(),
                             "concepto": str(item.get("concepto") or "Alimentación").strip(),
-                            "monto": monto_val,
+                            "monto": int(round(monto_val)),
                             "fecha": item.get("fecha")
                         })
                     return results
