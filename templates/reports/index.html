@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Generador de Informes Excel & Envío Gmail - HexOPS Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Informes y Cuentas de Cobro</h1>
+        <p class="page-subtitle">Generación por rango de fechas (típico: 20 al 19) con exportación Excel y envío por GMAIL</p>
+    </div>
+    <div style="display:flex; gap: 0.75rem; flex-wrap:wrap;">
+        <form method="POST" action="{{ url_for('reports.download_excel') }}" style="display:inline;">
+            <input type="hidden" name="start_date" value="{{ start_date }}">
+            <input type="hidden" name="end_date" value="{{ end_date }}">
+            <button type="submit" class="btn btn-primary">
+                📥 Descargar Excel (.xlsx)
+            </button>
+        </form>
+        <button type="button" class="btn btn-outline" style="border-color: var(--accent-secondary); color: var(--accent-secondary);" data-modal-target="gmailSendModal">
+            📧 Enviar por Correo GMAIL
+        </button>
+    </div>
+</div>
+
+<!-- Date Range Filter Card -->
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <form method="GET" action="{{ url_for('reports.report_dashboard') }}" style="display:flex; flex-wrap:wrap; gap: 1.25rem; align-items: flex-end;">
+        <div style="flex: 1; min-width: 200px;">
+            <label class="form-label">Fecha Inicio (Típico: 20 del mes anterior)</label>
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}" required>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <label class="form-label">Fecha Fin (Típico: 19 del mes actual)</label>
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}" required>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-outline">🔄 Actualizar Rango y Previsualizar</button>
+        </div>
+    </form>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Nombre del Archivo Excel</div>
+        <div class="kpi-value" style="font-size: 1.35rem; color: var(--accent-secondary); word-break: break-word;">{{ filename }}</div>
+        <div class="kpi-meta">Estructura idéntica a referencia</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Total Clientes en Informe</div>
+        <div class="kpi-value">{{ rows|length }}</div>
+        <div class="kpi-meta">Ordenados alfabéticamente</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Total Consolidado a Descontar</div>
+        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.2f}".format(total_monto) }}</div>
+        <div class="kpi-meta">Suma total del rango seleccionado</div>
+    </div>
+</div>
+
+<!-- Live Preview Table -->
+<div class="glass-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+        <h2 style="font-size: 1.25rem; font-weight:700;">Previsualización de la Hoja de Excel (Hoja 1)</h2>
+        <span class="badge badge-emerald">Lista para exportar</span>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Cedula</th>
+                    <th>Porceso de Desempeno</th>
+                    <th style="text-align: right;">Valor a Descontar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="mono">{{ loop.index }}</td>
+                    <td><strong>{{ row.nombre }}</strong></td>
+                    <td class="mono">{{ row.cedula }}</td>
+                    <td>{{ row.proceso_desempeno }}</td>
+                    <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-primary);">
+                        ${{ "{:,.2f}".format(row.valor_a_descontar) }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">
+                        No hay clientes para generar informe.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Enviar por Gmail -->
+<div id="gmailSendModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 620px;">
+        <div class="modal-header">
+            <h3 class="modal-title">📧 Enviar Informe Excel por Correo GMAIL</h3>
+            <button class="modal-close" data-close-modal>×</button>
+        </div>
+        <form method="POST" action="{{ url_for('reports.send_email') }}">
+            <input type="hidden" name="start_date" value="{{ start_date }}">
+            <input type="hidden" name="end_date" value="{{ end_date }}">
+
+            <div class="form-group">
+                <label class="form-label">Destinatario (Para)</label>
+                <input type="email" name="to_email" class="form-control" placeholder="ej. auxiliarnominaagesoc@outlook.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Asunto del Correo</label>
+                <input type="text" name="subject" class="form-control" value="{{ default_subject }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Cuerpo del Mensaje</label>
+                <textarea name="body_text" class="form-control" rows="7" required>{{ default_body }}</textarea>
+            </div>
+
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.4rem;">
+                <p style="font-size: 0.85rem; font-weight: 600; color: var(--accent-secondary); margin-bottom: 0.5rem;">
+                    🔐 Configuración Remitente Gmail (SMTP Seguro)
+                </p>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">Tu Correo Gmail</label>
+                        <input type="email" name="sender_email" class="form-control" placeholder="oliviaminav@gmail.com">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.8rem;">Contraseña de Aplicación (App Password)</label>
+                        <input type="password" name="sender_password" class="form-control" placeholder="16 caracteres de Google">
+                    </div>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
+                    *Si dejas vacío, el servidor utilizará las variables de entorno SMTP_USER / SMTP_PASSWORD configuradas en Render o tu archivo .env.
+                </p>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primary">📤 Enviar Correo con Excel Adjunto</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

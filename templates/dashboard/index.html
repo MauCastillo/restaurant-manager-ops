@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Principal - HexOPS Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Panel Ejecutivo HexOPS</h1>
+        <p class="page-subtitle">Arquitectura Hexagonal — Gestión Consolidada de Clientes y Transacciones</p>
+    </div>
+    <div style="display:flex; gap: 0.75rem; flex-wrap:wrap;">
+        <button class="btn btn-primary" data-modal-target="createClientModal">+ Registrar Cliente</button>
+        <button class="btn btn-outline" data-modal-target="createPurchaseModal">🛒 Nueva Compra</button>
+        <form method="POST" action="{{ url_for('clients.import_consulta_html') }}" style="display:inline;" onsubmit="return confirm('¿Deseas sincronizar los clientes desde /Volumes/COS_202606/Consulta.html?')">
+            <button type="submit" class="btn btn-outline" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
+                ⚡ Sincronizar Consulta.html
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">Total Clientes Registrados</div>
+        <div class="kpi-value">{{ total_clients }}</div>
+        <div class="kpi-meta">Sincronizados y activos</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Valor Base a Descontar</div>
+        <div class="kpi-value" style="color: var(--accent-secondary);">${{ "{:,.2f}".format(total_base_descuento) }}</div>
+        <div class="kpi-meta">Acumulado inicial de Consulta.html</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Total Compras Registradas</div>
+        <div class="kpi-value" style="color: var(--accent-primary);">${{ "{:,.2f}".format(total_compras_monto) }}</div>
+        <div class="kpi-meta">Nuevas transacciones / compras</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">Saldo Neto Consolidado</div>
+        <div class="kpi-value" style="color: #fff;">${{ "{:,.2f}".format(total_saldo_neto) }}</div>
+        <div class="kpi-meta">Descuento base + Compras</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;">
+    <!-- Recent Purchases Column -->
+    <div class="glass-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; font-weight:700;">Transacciones Recientes</h2>
+            <a href="{{ url_for('purchases.list_purchases') }}" class="btn btn-outline btn-sm">Ver Todas</a>
+        </div>
+
+        {% if recent_purchases %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Concepto</th>
+                        <th>Fecha</th>
+                        <th style="text-align: right;">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in recent_purchases %}
+                    {% set cl = client_map.get(p.client_id) %}
+                    <tr>
+                        <td>
+                            {% if cl %}
+                            <a href="{{ url_for('clients.detail_client', client_id=cl.id) }}" style="color: var(--accent-secondary); font-weight:600;">
+                                {{ cl.nombre }}
+                            </a>
+                            {% else %}
+                            Cliente #{{ p.client_id }}
+                            {% endif %}
+                        </td>
+                        <td>{{ p.concepto }}</td>
+                        <td class="mono">{{ p.fecha_compra }}</td>
+                        <td class="mono" style="text-align: right; font-weight:700; color: var(--accent-primary);">
+                            ${{ "{:,.2f}".format(p.monto) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No hay compras registradas aún.</p>
+        {% endif %}
+    </div>
+
+    <!-- Summary by Proceso de Desempeño -->
+    <div class="glass-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; font-weight:700;">Por Proceso de Desempeño</h2>
+            <span class="badge badge-cyan">{{ por_proceso|length }} Áreas</span>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Proceso</th>
+                        <th style="text-align:center;">Clientes</th>
+                        <th style="text-align:right;">Total Descontar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc, info in por_proceso.items() %}
+                    <tr>
+                        <td><strong>{{ proc }}</strong></td>
+                        <td style="text-align:center;"><span class="badge badge-emerald">{{ info.clientes }}</span></td>
+                        <td class="mono" style="text-align:right;">${{ "{:,.2f}".format(info.monto) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Register Client Modal -->
+<div id="createClientModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Registrar Nuevo Cliente</h3>
+            <button class="modal-close" data-close-modal>×</button>
+        </div>
+        <form method="POST" action="{{ url_for('clients.create_client') }}">
+            <div class="form-group">
+                <label class="form-label">Nombre Completo</label>
+                <input type="text" name="nombre" class="form-control" placeholder="Nombre del cliente" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Cédula / Identificación</label>
+                <input type="text" name="cedula" class="form-control" placeholder="Ej. 16848254" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Proceso de Desempeño</label>
+                <input type="text" name="proceso_desempeno" class="form-control" value="Pool de Ambulancia" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Valor a Descontar inicial ($)</label>
+                <input type="number" step="0.01" name="valor_a_descontar" class="form-control" value="0.00" required>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primary">Registrar Cliente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Create Purchase Modal -->
+<div id="createPurchaseModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 class="modal-title">Registrar Nueva Compra</h3>
+            <button class="modal-close" data-close-modal>×</button>
+        </div>
+        <form method="POST" action="{{ url_for('purchases.create_purchase') }}">
+            <div class="form-group" data-client-autocomplete>
+                <label class="form-label">Buscar Cliente (Escribe nombre o cédula, ej: "andres")</label>
+                <div class="autocomplete-wrapper">
+                    <input type="text" class="form-control autocomplete-input" placeholder="🔍 Escribe para buscar... (ej. andres)" autocomplete="off">
+                    <input type="hidden" name="client_id" required>
+                    <div class="autocomplete-dropdown"></div>
+                </div>
+                <div class="selected-client-display" style="display: none;"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Concepto de la Compra / Detalle</label>
+                <input type="text" name="concepto" class="form-control" placeholder="Ej. Uniforme / Alimentos / Suministros" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Monto ($)</label>
+                <input type="number" step="0.01" name="monto" class="form-control" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha de Compra</label>
+                <input type="date" name="fecha_compra" class="form-control" required>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Compra</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Seguridad de Usuarios - HexOPS Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Gestión de Cuentas de Seguridad</h1>
+        <p class="page-subtitle">Administración de usuarios autorizados, operadores y roles del sistema.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('auth.register_user') }}" class="btn btn-primary">+ Nuevo Operador/Admin</a>
+    </div>
+</div>
+
+<div class="glass-card">
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Fecha Registro</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td class="mono">#{{ user.id }}</td>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge {% if user.role == 'admin' %}badge-emerald{% else %}badge-cyan{% endif %}">
+                            {{ user.role|upper }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if user.is_active %}badge-emerald{% else %}badge-amber{% endif %}">
+                            {% if user.is_active %}ACTIVO{% else %}INACTIVO{% endif %}
+                        </span>
+                    </td>
+                    <td class="mono">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '' }}</td>
+                    <td style="text-align: right;">
+                        {% if user.id != current_user.id %}
+                        <form method="POST" action="{{ url_for('auth.delete_user', user_id=user.id) }}" style="display:inline;" onsubmit="return confirm('¿Confirma revocar y eliminar este usuario del sistema?')">
+                            <button type="submit" class="btn btn-danger btn-sm">Revocar Acceso</button>
+                        </form>
+                        {% else %}
+                        <span class="badge badge-amber">Sesión Actual</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
