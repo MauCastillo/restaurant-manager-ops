@@ -7,27 +7,46 @@
         <h1 class="page-title">Registro General de Compras</h1>
         <p class="page-subtitle">Todas las transacciones y consumos registrados por los clientes del sistema.</p>
     </div>
-    <div>
+    <div style="display:flex; gap: 0.75rem; flex-wrap:wrap;">
+        <button class="btn btn-outline" data-modal-target="ocrUploadModal" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
+            📸 Escanear Notas Manuscritas (AI OCR)
+        </button>
         <button class="btn btn-primary" data-modal-target="createPurchaseModal">+ Registrar Nueva Compra</button>
     </div>
 </div>
 
-<!-- Client Purchase History Searcher Panel -->
-<div class="glass-card" style="margin-bottom: 1.5rem;">
-    <form method="GET" action="{{ url_for('purchases.list_purchases') }}" data-auto-submit>
-        <div class="form-group" data-client-autocomplete style="margin-bottom: 0;">
-            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:0.95rem; font-weight:700;">👤 Consultar Fechas e Historial de Compras de un Único Cliente</span>
-                {% if selected_client %}
-                <a href="{{ url_for('purchases.list_purchases') }}" style="font-size:0.85rem; color: var(--danger); font-weight:600;">✕ Quitar filtro (Ver todos los clientes)</a>
-                {% endif %}
-            </label>
-            <div class="autocomplete-wrapper">
-                <input type="text" class="form-control autocomplete-input" placeholder="🔍 Escribe nombre o cédula para consultar sus fechas y valores de compra (ej. andres)..." autocomplete="off" value="{{ selected_client.nombre if selected_client else '' }}">
-                <input type="hidden" name="client_id" value="{{ selected_client.id if selected_client else '' }}">
-                <div class="autocomplete-dropdown"></div>
+<!-- Client & Date Range Purchase History Searcher Panel -->
+<div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.4rem 1.8rem;">
+    <form method="GET" action="{{ url_for('purchases.list_purchases') }}">
+        <div style="display:flex; align-items:flex-end; gap: 1rem; flex-wrap:wrap;">
+            <div class="form-group" data-client-autocomplete style="flex: 2; min-width: 260px; margin-bottom: 0;">
+                <label class="form-label" style="font-size:0.85rem; font-weight:700; margin-bottom: 0.35rem;">
+                    👤 Cliente (Opcional)
+                </label>
+                <div class="autocomplete-wrapper">
+                    <input type="text" class="form-control autocomplete-input" placeholder="🔍 Buscar por nombre o cédula..." autocomplete="off" value="{{ selected_client.nombre if selected_client else '' }}">
+                    <input type="hidden" name="client_id" value="{{ selected_client.id if selected_client else '' }}">
+                    <div class="autocomplete-dropdown"></div>
+                </div>
+                <div class="selected-client-display" style="display: none;"></div>
             </div>
-            <div class="selected-client-display" style="display: none;"></div>
+
+            <div style="flex: 1; min-width: 160px;">
+                <label class="form-label" style="font-size:0.85rem; font-weight:700; margin-bottom: 0.35rem;">📅 Fecha Desde</label>
+                <input type="date" name="fecha_inicio" class="form-control" value="{{ fecha_inicio or '' }}" style="cursor: pointer;">
+            </div>
+
+            <div style="flex: 1; min-width: 160px;">
+                <label class="form-label" style="font-size:0.85rem; font-weight:700; margin-bottom: 0.35rem;">📅 Fecha Hasta</label>
+                <input type="date" name="fecha_fin" class="form-control" value="{{ fecha_fin or '' }}" style="cursor: pointer;">
+            </div>
+
+            <div style="display:flex; gap: 0.6rem;">
+                <button type="submit" class="btn btn-primary">🔍 Consultar</button>
+                {% if selected_client or fecha_inicio or fecha_fin %}
+                <a href="{{ url_for('purchases.list_purchases') }}" class="btn btn-outline" style="border-color: #f43f5e; color: #f43f5e;">✕ Limpiar Filtros</a>
+                {% endif %}
+            </div>
         </div>
     </form>
 </div>
@@ -68,8 +87,15 @@
 
     <!-- Chronological Dates & Values Breakdown -->
     <div>
-        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.6rem;">📅 CRONOLOGÍA DE FECHAS Y VALORES REGISTRADOS:</div>
+    <div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1; margin-bottom: 0.6rem;">📅 CRONOLOGÍA Y BASE DE DESCUENTO DEL CLIENTE:</div>
         <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+            <span class="badge badge-cyan" style="padding: 0.55rem 0.9rem; font-size: 0.88rem; display:inline-flex; align-items:center; gap:0.4rem;">
+                <span>📌 <strong class="mono">Base Consulta.html</strong></span>
+                <span>—</span>
+                <strong style="color: #fff;">${{ "{:,.2f}".format(selected_client.valor_a_descontar) }}</strong>
+                <span style="opacity: 0.85;">(Deducción Inicial)</span>
+            </span>
             {% for p in purchases %}
             <span class="badge badge-emerald" style="padding: 0.55rem 0.9rem; font-size: 0.88rem; display:inline-flex; align-items:center; gap:0.4rem;">
                 <span>📅 <strong class="mono">{{ p.fecha_compra }}</strong></span>
@@ -77,8 +103,6 @@
                 <strong style="color: #fff;">${{ "{:,.2f}".format(p.monto) }}</strong>
                 <span style="opacity: 0.85;">({{ p.concepto }})</span>
             </span>
-            {% else %}
-            <span style="color: var(--text-muted); font-size: 0.9rem;">No hay compras registradas en el historial de este cliente.</span>
             {% endfor %}
         </div>
     </div>
@@ -108,6 +132,27 @@
                 </tr>
             </thead>
             <tbody>
+                {% if selected_client %}
+                <tr style="background: rgba(6, 182, 212, 0.08); border-left: 3px solid var(--accent-secondary);">
+                    <td class="mono">0</td>
+                    <td>
+                        <a href="{{ url_for('clients.detail_client', client_id=selected_client.id) }}" style="color: var(--accent-secondary); font-weight:800;">
+                            📌 {{ selected_client.nombre }}
+                        </a>
+                    </td>
+                    <td class="mono">{{ selected_client.cedula }}</td>
+                    <td><strong style="color: var(--accent-secondary);">Deducción Base Consulta.html</strong></td>
+                    <td class="mono">Importación Base</td>
+                    <td>Proceso: {{ selected_client.proceso_desempeno }}</td>
+                    <td class="mono" style="text-align: right; font-weight: 800; color: var(--accent-secondary); font-size: 1.05rem;">
+                        ${{ "{:,.2f}".format(selected_client.valor_a_descontar) }}
+                    </td>
+                    <td style="text-align: right;">
+                        <span class="badge badge-cyan" style="font-size: 0.8rem;">Base Inicial</span>
+                    </td>
+                </tr>
+                {% endif %}
+
                 {% for purchase in purchases %}
                 {% set c = client_map.get(purchase.client_id) %}
                 <tr>
@@ -125,7 +170,7 @@
                     <td><strong>{{ purchase.concepto }}</strong></td>
                     <td class="mono">{{ purchase.fecha_compra }}</td>
                     <td>{{ purchase.notas or '-' }}</td>
-                    <td class="mono" style="text-align: right; font-weight: 700; color: var(--accent-primary);">
+                    <td class="mono" style="text-align: right; font-weight: 700; color: var(--accent-primary); font-size: 1.05rem;">
                         ${{ "{:,.2f}".format(purchase.monto) }}
                     </td>
                     <td style="text-align: right;">
@@ -136,8 +181,27 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                        No hay registros de compras en el sistema. Presiona "+ Registrar Nueva Compra" para agregar una.
+                    <td colspan="8" style="text-align: center; padding: 2.5rem; background: rgba(255, 255, 255, 0.03);">
+                        <div style="max-width: 580px; margin: 0 auto;">
+                            {% if selected_client %}
+                            <div style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.6rem;">
+                                ✅ Registro Base de Consulta.html Cargado
+                            </div>
+                            <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.4rem; line-height: 1.5;">
+                                {{ selected_client.nombre }} cuenta con su deducción base de <strong style="color: var(--accent-secondary);">${{ "{:,.2f}".format(selected_client.valor_a_descontar) }}</strong>. Aún no se han registrado consumos diarios adicionales.
+                            </p>
+                            {% else %}
+                            <div style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.6rem;">
+                                No hay consumos adicionales registrados
+                            </div>
+                            <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.4rem;">
+                                Puedes registrar nuevas compras o consumos para cualquier cliente haciendo clic en el botón inferior.
+                            </p>
+                            {% endif %}
+                            <button type="button" class="btn btn-primary" data-modal-target="createPurchaseModal">
+                                🛒 + Registrar Nueva Compra
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -208,6 +272,34 @@
             <div style="display:flex; justify-content:flex-end; gap: 0.75rem;">
                 <button type="button" class="btn btn-outline" data-close-modal>Cerrar</button>
                 <button type="submit" class="btn btn-primary">Guardar Compra</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Escaneo OCR con IA -->
+<div id="ocrUploadModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3 class="modal-title">✨ Escanear Notas Manuscritas (Gemini AI)</h3>
+            <button class="modal-close" data-close-modal>×</button>
+        </div>
+        <form method="POST" action="{{ url_for('purchases.analyze_ocr_image') }}" enctype="multipart/form-data">
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+                Sube una fotografía de las notas o recibos escritos a mano. La IA de Google Gemini extraerá cada renglón y te mostrará una vista previa editable para confirmar antes de guardarlo.
+            </p>
+            <div class="form-group">
+                <label class="form-label" style="font-weight: 700;">Seleccionar Fotografía (.jpg, .png)</label>
+                <input type="file" name="image" class="form-control" accept="image/*" required style="padding: 0.75rem;">
+            </div>
+            <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md); padding: 0.8rem 1rem; margin-top: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--accent-secondary);">
+                💡 <strong>Ejemplo compatible:</strong> Imágenes de apuntes diarios o listas como las ubicadas en <code>/Downloads/input/</code>.
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap: 0.75rem;">
+                <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                    🔍 Analizar con Inteligencia Artificial
+                </button>
             </div>
         </form>
     </div>

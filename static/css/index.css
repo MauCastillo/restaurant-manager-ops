@@ -292,14 +292,19 @@ a {
 }
 
 .btn-outline {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.18);
+    border-color: #ffffff;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2);
 }
 
 .btn-danger {
@@ -329,13 +334,14 @@ a {
 
 .kpi-card {
     background: var(--bg-surface);
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: var(--radius-lg);
     padding: 1.6rem;
     backdrop-filter: blur(12px);
     transition: var(--transition);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
 }
 
 .kpi-card::before {
@@ -346,14 +352,14 @@ a {
     right: 0;
     height: 3px;
     background: var(--accent-gradient);
-    opacity: 0;
+    opacity: 0.8;
     transition: var(--transition);
 }
 
 .kpi-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.18);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
 }
 
 .kpi-card:hover::before {
@@ -362,10 +368,10 @@ a {
 
 .kpi-label {
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+    color: #cbd5e1;
 }
 
 .kpi-value {
@@ -407,14 +413,14 @@ a {
 }
 
 .table th {
-    background: rgba(25, 34, 54, 0.8);
-    padding: 1rem 1.25rem;
-    font-weight: 700;
-    font-size: 0.85rem;
+    background: rgba(30, 41, 59, 0.92);
+    padding: 1.05rem 1.25rem;
+    font-weight: 800;
+    font-size: 0.86rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-secondary);
-    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 0.07em;
+    color: #f8fafc;
+    border-bottom: 2px solid rgba(16, 185, 129, 0.5);
 }
 
 .table td {
@@ -697,4 +703,20 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-weight: 600;
     color: var(--success);
 }
+
+/* Campos numéricos y de texto dentro de tablas editables (OCR) */
+.table input[type="number"],
+.table input[type="text"],
+.table input[type="date"],
+.table select.form-control {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.table input[type="number"] {
+    min-width: 140px;
+    letter-spacing: 0.5px;
+}
+
 

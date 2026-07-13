@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import List, Optional, Tuple
 from bs4 import BeautifulSoup
@@ -117,6 +118,53 @@ class ClientService(ClientServicePort):
                     cedula=cedula,
                     proceso_desempeno=proceso,
                     valor_a_descontar=valor
+                )
+                self.client_repo.save(new_client)
+                imported += 1
+
+        return (imported, skipped)
+
+    def import_from_json_file(self, file_path: str) -> Tuple[int, int]:
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"El archivo JSON {file_path} no existe.")
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if not isinstance(data, list):
+            raise ValueError("El formato del archivo JSON debe ser una lista de clientes.")
+
+        imported = 0
+        skipped = 0
+
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            nombre = str(item.get("nombre") or "").strip()
+            cedula = str(item.get("cedula") or "").strip()
+            proceso = str(
+                item.get("proceso_desempeno")
+                or item.get("Porceso de Desempeno")
+                or "Pool de Ambulancia"
+            ).strip()
+
+            if not cedula or not nombre:
+                skipped += 1
+                continue
+
+            existing = self.client_repo.find_by_cedula(cedula)
+            if existing:
+                existing.nombre = nombre
+                existing.proceso_desempeno = proceso
+                self.client_repo.save(existing)
+                skipped += 1
+            else:
+                new_client = Client(
+                    nombre=nombre,
+                    cedula=cedula,
+                    proceso_desempeno=proceso,
+                    valor_a_descontar=0.0
                 )
                 self.client_repo.save(new_client)
                 imported += 1

@@ -25,12 +25,18 @@ def list_purchases():
     client_map = {c.id: c for c in clients}
 
     client_id_filter = request.args.get("client_id", type=int)
+    fecha_inicio = request.args.get("fecha_inicio", "").strip()
+    fecha_fin = request.args.get("fecha_fin", "").strip()
     selected_client = None
-    total_filtered_monto = 0.0
 
     if client_id_filter:
         selected_client = client_map.get(client_id_filter)
         purchases = [p for p in purchases if p.client_id == client_id_filter]
+
+    if fecha_inicio:
+        purchases = [p for p in purchases if p.fecha_compra >= fecha_inicio]
+    if fecha_fin:
+        purchases = [p for p in purchases if p.fecha_compra <= fecha_fin]
 
     total_filtered_monto = sum(p.monto for p in purchases)
 
@@ -41,6 +47,8 @@ def list_purchases():
         client_map=client_map,
         selected_client=selected_client,
         client_id_filter=client_id_filter,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
         total_filtered_monto=total_filtered_monto
     )
 
@@ -111,3 +119,80 @@ def check_duplicate():
         return jsonify({"is_duplicate": is_dup})
     except Exception as e:
         return jsonify({"is_duplicate": False, "error": str(e)})
+
+
+@purchase_bp.route("/ocr/analyze", methods=["POST"])
+@login_required
+def analyze_ocr_image():
+    """Receive uploaded handwritten image, analyze via Gemini AI OCR, and render preview screen."""
+    import base64
+    image_file = request.files.get("image")
+    if not image_file or image_file.filename == "":
+        flash("Por favor selecciona o toma una fotografía antes de analizar.", "danger")
+        return redirect(url_for("purchases.list_purchases"))
+
+    try:
+        image_bytes = image_file.read()
+        mime_type = image_file.content_type or "image/jpeg"
+        image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        image_data_uri = f"data:{mime_type};base64,{image_b64}"
+
+        ocr_service = current_app.ocr_service
+        extracted_rows = ocr_service.analyze_sales_image(image_bytes, mime_type)
+
+        client_service = current_app.client_service
+        all_clients = client_service.list_clients()
+
+        return render_template(
+            "purchases/ocr_preview.html",
+            extracted_rows=extracted_rows,
+            image_data_uri=image_data_uri,
+            all_clients=all_clients,
+            image_filename=image_file.filename
+        )
+    except Exception as e:
+        flash(f"Error al analizar la imagen con Inteligencia Artificial: {str(e)}", "danger")
+        return redirect(url_for("purchases.list_purchases"))
+
+
+@purchase_bp.route("/ocr/confirm", methods=["POST"])
+@login_required
+def confirm_ocr_purchases():
+    """Save user-verified purchases extracted from OCR preview form."""
+    client_ids = request.form.getlist("client_id")
+    conceptos = request.form.getlist("concepto")
+    montos = request.form.getlist("monto")
+    fechas = request.form.getlist("fecha_compra")
+
+    saved_count = 0
+    errors_count = 0
+    purchase_service = get_purchase_service()
+
+    for cid_raw, conc, m_raw, f_raw in zip(client_ids, conceptos, montos, fechas):
+        try:
+            if not cid_raw or not str(cid_raw).strip():
+                continue
+            cid = int(cid_raw)
+            monto_val = float(m_raw or 0.0)
+            if monto_val <= 0:
+                continue
+
+            purchase_service.register_purchase(
+                client_id=cid,
+                concepto=(conc or "Alimentación").strip(),
+                monto=monto_val,
+                fecha_compra=(f_raw or datetime.now().strftime("%Y-%m-%d")).strip(),
+                notas="Registrado vía IA Gemini OCR (Escaneo Manuscrito)"
+            )
+            saved_count += 1
+        except Exception:
+            errors_count += 1
+
+    if saved_count > 0:
+        flash(f"✅ Se guardaron exitosamente {saved_count} consumos/ventas verificados desde la fotografía manuscrita.", "success")
+    elif errors_count > 0:
+        flash("No se guardaron registros debido a errores en la selección de cliente o montos.", "warning")
+    else:
+        flash("No se seleccionó ningún registro válido para guardar.", "info")
+
+    return redirect(url_for("purchases.list_purchases"))

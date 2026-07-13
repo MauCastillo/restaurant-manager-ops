@@ -9,11 +9,13 @@ from src.adapters.outbound.persistence.sqlite_purchase_repository import SQLiteP
 from src.adapters.outbound.security.password_hasher import PasswordHasher
 from src.adapters.outbound.reports.excel_report_generator import OpenpyxlReportGenerator
 from src.adapters.outbound.email.gmail_smtp_sender import GmailSmtpSender
+from src.adapters.outbound.ai.gemini_ocr_adapter import GeminiOcrAdapter
 
 from src.application.services.auth_service import AuthService
 from src.application.services.client_service import ClientService
 from src.application.services.purchase_service import PurchaseService
 from src.application.services.report_service import ReportService
+from src.application.services.ocr_service import OcrService
 
 from src.adapters.inbound.web.auth_controller import auth_bp
 from src.adapters.inbound.web.client_controller import client_bp
@@ -39,12 +41,14 @@ def create_app(config_class=None):
     hasher = PasswordHasher()
     report_gen = OpenpyxlReportGenerator()
     email_sender = GmailSmtpSender()
+    ocr_adapter = GeminiOcrAdapter()
 
     # Initialize Application Use Case Services
     app.auth_service = AuthService(user_repo, hasher)
     app.client_service = ClientService(client_repo)
     app.purchase_service = PurchaseService(purchase_repo, client_repo)
     app.report_service = ReportService(client_repo, purchase_repo, report_gen, email_sender)
+    app.ocr_service = OcrService(ocr_adapter, client_repo)
 
     # Register Blueprints (Driving Adapters)
     app.register_blueprint(dashboard_bp)

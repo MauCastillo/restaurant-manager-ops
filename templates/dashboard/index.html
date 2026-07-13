@@ -10,11 +10,6 @@
     <div style="display:flex; gap: 0.75rem; flex-wrap:wrap;">
         <button class="btn btn-primary" data-modal-target="createClientModal">+ Registrar Cliente</button>
         <button class="btn btn-outline" data-modal-target="createPurchaseModal">🛒 Nueva Compra</button>
-        <form method="POST" action="{{ url_for('clients.import_consulta_html') }}" style="display:inline;" onsubmit="return confirm('¿Deseas sincronizar los clientes desde /Volumes/COS_202606/Consulta.html?')">
-            <button type="submit" class="btn btn-outline" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
-                ⚡ Sincronizar Consulta.html
-            </button>
-        </form>
     </div>
 </div>
 

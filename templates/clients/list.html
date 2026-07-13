@@ -9,9 +9,10 @@
     </div>
     <div style="display:flex; gap: 0.75rem;">
         <button class="btn btn-primary" data-modal-target="createClientModal">+ Registrar Cliente</button>
-        <form method="POST" action="{{ url_for('clients.import_consulta_html') }}" style="display:inline;">
-            <button type="submit" class="btn btn-outline" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">
-                ⚡ Sincronizar Consulta.html
+        <form method="POST" action="{{ url_for('clients.import_consulta_html') }}" enctype="multipart/form-data" style="display:inline;">
+            <input type="file" name="json_file" id="jsonFileInput" accept=".json" style="display:none;" onchange="this.form.submit()">
+            <button type="button" class="btn btn-outline" style="border-color: var(--accent-secondary); color: var(--accent-secondary);" onclick="document.getElementById('jsonFileInput').click()">
+                ⚡ Cargar Clientes .JSON (Consulta.json)
             </button>
         </form>
     </div>

@@ -63,11 +63,24 @@ def detail_client(client_id):
     purchases = purchase_service.get_purchases_by_client(client_id)
     summary = purchase_service.get_client_financial_summary(client_id)
 
+    fecha_inicio = request.args.get("fecha_inicio", "").strip()
+    fecha_fin = request.args.get("fecha_fin", "").strip()
+
+    if fecha_inicio:
+        purchases = [p for p in purchases if p.fecha_compra >= fecha_inicio]
+    if fecha_fin:
+        purchases = [p for p in purchases if p.fecha_compra <= fecha_fin]
+
+    filtered_total = sum(p.monto for p in purchases)
+
     return render_template(
         "clients/detail.html",
         client=client,
         purchases=purchases,
-        summary=summary
+        summary=summary,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        filtered_total=filtered_total
     )
 
 
@@ -114,16 +127,31 @@ def delete_client(client_id):
 @client_bp.route("/import_consulta", methods=["POST"])
 @login_required
 def import_consulta_html():
-    file_path = current_app.config.get("DEFAULT_CONSULTA_HTML_PATH", "/Volumes/COS_202606/Consulta.html")
     client_service = get_client_service()
+    temp_file_path = None
+    import os
+    import tempfile
 
     try:
-        imported, skipped = client_service.import_from_html_file(file_path)
-        flash(f"Sincronización con Consulta.html completada: {imported} nuevos clientes registrados ({skipped} actualizados o existentes).", "success")
-    except FileNotFoundError:
-        flash(f"No se encontró el archivo {file_path}. Verifica que la ruta o volumen estén accesibles.", "warning")
+        uploaded_file = request.files.get("json_file")
+        if not uploaded_file or uploaded_file.filename == "":
+            flash("Por favor selecciona un archivo .json para importar los clientes.", "warning")
+            return redirect(url_for("clients.list_clients"))
+
+        fd, temp_file_path = tempfile.mkstemp(suffix=".json")
+        os.close(fd)
+        uploaded_file.save(temp_file_path)
+
+        imported, skipped = client_service.import_from_json_file(temp_file_path)
+        flash(f"Carga de clientes (.json) desde '{uploaded_file.filename}' completada: {imported} nuevos clientes registrados ({skipped} actualizados sin modificar montos base).", "success")
     except Exception as e:
-        flash(f"Error al procesar el archivo HTML: {str(e)}", "danger")
+        flash(f"Error al procesar el archivo JSON de clientes: {str(e)}", "danger")
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
 
     return redirect(url_for("clients.list_clients"))
 

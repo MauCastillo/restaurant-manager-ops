@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Validar OCR Manuscrito con IA - HexOPS Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <span class="badge badge-cyan" style="margin-bottom: 0.5rem; display: inline-block;">✨ Inteligencia Artificial Gemini OCR</span>
+        <h1 class="page-title">Inspección y Validación de Notas Manuscritas</h1>
+        <p class="page-subtitle">Revisa que la IA haya interpretado correctamente cada registro antes de guardarlos en el sistema</p>
+    </div>
+    <div>
+        <a href="{{ url_for('purchases.list_purchases') }}" class="btn btn-outline">← Cancelar y Volver</a>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('purchases.confirm_ocr_purchases') }}" id="ocrConfirmForm">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; align-items: start;">
+        
+        <!-- Columna Izquierda: Fotografía Manuscrita -->
+        <div class="glass-card" style="position: sticky; top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">📸 Fotografía Original Subida</h3>
+                <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">{{ image_filename }}</span>
+            </div>
+            <div style="border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); overflow: hidden; max-height: 580px; background: #0b0f19; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ image_data_uri }}" alt="Fotografía manuscrita subida" style="max-width: 100%; max-height: 560px; object-fit: contain;">
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.75rem;">
+                💡 Compara los renglones del papel con la tabla de la derecha y realiza cualquier ajuste de cliente, monto o fecha.
+            </p>
+        </div>
+
+        <!-- Columna Derecha: Tabla Interactiva de Registros Detectados -->
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">⚡ Registros Extraídos por IA</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-muted);">Verifica que cada venta esté asignada al cliente correcto</p>
+                </div>
+                <span class="badge badge-emerald" id="rowCounterBadge">{{ extracted_rows|length }} Registros detectados</span>
+            </div>
+
+            <div class="table-container" style="max-height: 550px; overflow-y: auto; overflow-x: auto;">
+                <table class="table" id="ocrTable" style="min-width: 720px;">
+                    <thead>
+                        <tr>
+                            <th style="width: 32%;">Cliente Asociado</th>
+                            <th style="width: 20%;">Concepto</th>
+                            <th style="width: 28%; min-width: 140px; text-align: right;">Monto ($)</th>
+                            <th style="width: 15%; min-width: 135px;">Fecha</th>
+                            <th style="width: 5%; text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ocrTableBody">
+                        {% for row in extracted_rows %}
+                        <tr class="ocr-row">
+                            <td>
+                                <select name="client_id" class="form-control" required style="font-weight: 600; min-width: 180px;">
+                                    <option value="">-- Seleccionar Cliente (Texto manuscrito: "{{ row.cliente_texto }}") --</option>
+                                    {% for client in all_clients %}
+                                    <option value="{{ client.id }}" {% if row.client_id == client.id %}selected{% endif %}>
+                                        {{ client.nombre }} (Céd: {{ client.cedula }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if row.cliente_texto %}
+                                <div style="font-size: 0.75rem; color: var(--accent-secondary); margin-top: 0.25rem;">
+                                    📝 Manuscrito leído: "<strong>{{ row.cliente_texto }}</strong>"
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <input type="text" name="concepto" class="form-control" style="min-width: 120px;" value="{{ row.concepto }}" required>
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" name="monto" class="form-control mono" style="min-width: 135px; width: 100%; text-align: right; font-weight: 700; font-size: 0.95rem; color: var(--accent-primary); padding: 0.55rem 0.75rem;" value="{{ row.monto }}" required>
+                            </td>
+                            <td>
+                                <input type="date" name="fecha_compra" class="form-control mono" style="min-width: 135px;" value="{{ row.fecha_compra }}" required>
+                            </td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn btn-outline btn-sm remove-ocr-row-btn" style="color: var(--danger); border-color: var(--danger);" title="Eliminar este renglón">×</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                No se detectaron renglones legibles. Puedes añadir uno manualmente usando el botón inferior.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                <button type="button" class="btn btn-outline btn-sm" id="addManualRowBtn">+ Añadir Renglón Manual</button>
+                <div style="display: flex; gap: 0.75rem;">
+                    <a href="{{ url_for('purchases.list_purchases') }}" class="btn btn-outline">Descartar</a>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                        ✅ Confirmar y Guardar Ventas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<!-- Template oculto para nuevos renglones manuales -->
+<template id="newRowTemplate">
+    <tr class="ocr-row">
+        <td>
+            <select name="client_id" class="form-control" required style="font-weight: 600;">
+                <option value="">-- Selecciona Cliente --</option>
+                {% for client in all_clients %}
+                <option value="{{ client.id }}">{{ client.nombre }} (Céd: {{ client.cedula }})</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="concepto" class="form-control" style="min-width: 120px;" value="Alimentación" required>
+        </td>
+        <td>
+            <input type="number" step="0.01" name="monto" class="form-control mono" style="min-width: 135px; width: 100%; text-align: right; font-weight: 700; font-size: 0.95rem; color: var(--accent-primary); padding: 0.55rem 0.75rem;" value="0.00" required>
+        </td>
+        <td>
+            <input type="date" name="fecha_compra" class="form-control mono" style="min-width: 135px;" value="{{ extracted_rows[0].fecha_compra if extracted_rows else '' }}" required>
+        </td>
+        <td style="text-align: center;">
+            <button type="button" class="btn btn-outline btn-sm remove-ocr-row-btn" style="color: var(--danger); border-color: var(--danger);" title="Eliminar este renglón">×</button>
+        </td>
+    </tr>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const tableBody = document.getElementById("ocrTableBody");
+    const addBtn = document.getElementById("addManualRowBtn");
+    const template = document.getElementById("newRowTemplate");
+    const counterBadge = document.getElementById("rowCounterBadge");
+
+    function updateCounter() {
+        const rowsCount = tableBody.querySelectorAll(".ocr-row").length;
+        if (counterBadge) {
+            counterBadge.textContent = rowsCount + " Registros detectados";
+        }
+    }
+
+    tableBody.addEventListener("click", function(e) {
+        if (e.target.classList.contains("remove-ocr-row-btn")) {
+            const row = e.target.closest("tr");
+            if (row) {
+                row.remove();
+                updateCounter();
+            }
+        }
+    });
+
+    if (addBtn && template) {
+        addBtn.addEventListener("click", function() {
+            const clone = template.content.cloneNode(true);
+            tableBody.appendChild(clone);
+            updateCounter();
+        });
+    }
+});
+</script>
+{% endblock %}

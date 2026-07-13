@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 class Config:
     """Base application configuration."""
@@ -10,12 +12,6 @@ class Config:
     # SQLite Database Configuration
     INSTANCE_DIR = BASE_DIR / "instance"
     DATABASE_PATH = os.environ.get("DATABASE_PATH", str(INSTANCE_DIR / "app.db"))
-    
-    # Consultation HTML file path for client seeding
-    DEFAULT_CONSULTA_HTML_PATH = os.environ.get(
-        "CONSULTA_HTML_PATH",
-        "/Volumes/COS_202606/Consulta.html"
-    )
     
     # Application settings
     APP_NAME = "Gestor de Clientes & Compras"

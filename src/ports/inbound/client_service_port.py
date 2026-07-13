@@ -40,3 +40,8 @@ class ClientServicePort(ABC):
     def import_from_html_file(self, file_path: str) -> Tuple[int, int]:
         """Parse and register clients from Consulta.html file. Returns (imported_count, skipped_count)."""
         pass
+
+    @abstractmethod
+    def import_from_json_file(self, file_path: str) -> Tuple[int, int]:
+        """Parse and register clients from JSON file without modifying valor_a_descontar. Returns (imported_count, skipped_count)."""
+        pass

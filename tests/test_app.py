@@ -25,6 +25,8 @@ class TestHexagonalApp(unittest.TestCase):
             DATABASE_PATH = self.db_path
 
         self.app = create_app(RuntimeTestConfig)
+        with self.app.app_context():
+            self.app.client_service.register_client("Andres Test", "12345678", "Pool de Ambulancia", 100000.0)
         self.client = self.app.test_client()
 
     def tearDown(self):
@@ -148,8 +150,101 @@ class TestHexagonalApp(unittest.TestCase):
         res = self.client.get(f"/purchases/?client_id={client_id}")
         self.assertEqual(res.status_code, 200)
         html = res.data.decode("utf-8")
-        self.assertIn("CRONOLOGÍA DE FECHAS Y VALORES REGISTRADOS", html)
+        self.assertIn("CRONOLOGÍA Y BASE DE DESCUENTO DEL CLIENTE", html)
         self.assertIn("18,500.00", html)
+
+
+    def test_09_date_range_filtering(self):
+        self.client.post("/auth/login", data={"username": "admin", "password": "admin123"}, follow_redirects=True)
+        with self.app.app_context():
+            client = self.app.client_service.list_clients()[0]
+            self.app.purchase_service.register_purchase(
+                client_id=client.id,
+                concepto="Desayuno Mayo",
+                monto=12000.0,
+                fecha_compra="2026-05-25"
+            )
+            self.app.purchase_service.register_purchase(
+                client_id=client.id,
+                concepto="Almuerzo Junio",
+                monto=15000.0,
+                fecha_compra="2026-06-15"
+            )
+            client_id = client.id
+
+        res = self.client.get(f"/clients/{client_id}?fecha_inicio=2026-06-01&fecha_fin=2026-06-30")
+        self.assertEqual(res.status_code, 200)
+        html = res.data.decode("utf-8")
+        self.assertIn("Almuerzo Junio", html)
+        self.assertNotIn("Desayuno Mayo", html)
+
+        res2 = self.client.get(f"/purchases/?fecha_inicio=2026-05-01&fecha_fin=2026-05-31")
+        self.assertEqual(res2.status_code, 200)
+        html2 = res2.data.decode("utf-8")
+        self.assertIn("Desayuno Mayo", html2)
+        self.assertNotIn("Almuerzo Junio", html2)
+
+
+    def test_10_import_clients_from_json(self):
+        import json, tempfile, os
+        test_clients = [
+            {"nombre": "Cliente JSON Test", "cedula": "999888777", "proceso_desempeno": "Pool de Ambulancia"}
+        ]
+        fd, path = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(test_clients, f)
+
+        with self.app.app_context():
+            imported, skipped = self.app.client_service.import_from_json_file(path)
+            self.assertEqual(imported, 1)
+            client = self.app.client_service.get_client_by_cedula("999888777")
+            self.assertIsNotNone(client)
+            self.assertEqual(client.nombre, "Cliente JSON Test")
+            self.assertEqual(client.valor_a_descontar, 0.0)
+
+        os.remove(path)
+
+    def test_11_import_clients_via_file_upload(self):
+        import io
+        self.client.post("/auth/login", data={"username": "admin", "password": "admin123"}, follow_redirects=True)
+        json_content = b'[{"nombre": "Cliente Subido Web", "cedula": "777666555", "proceso_desempeno": "Sistemas"}]'
+        data = {
+            "json_file": (io.BytesIO(json_content), "Consulta.json")
+        }
+        res = self.client.post("/clients/import_consulta", data=data, content_type="multipart/form-data", follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+        with self.app.app_context():
+            client = self.app.client_service.get_client_by_cedula("777666555")
+            self.assertEqual(client.nombre, "Cliente Subido Web")
+
+    def test_12_ocr_service_matching_and_confirm(self):
+        class DummyOcrPort:
+            def analyze_handwritten_image(self, image_bytes, mime_type="image/jpeg"):
+                return [
+                    {"cliente_texto": "12345678", "concepto": "Almuerzo IA", "monto": 25000.0, "fecha": "2026-07-13"}
+                ]
+
+        with self.app.app_context():
+            from src.application.services.ocr_service import OcrService
+            ocr_srv = OcrService(DummyOcrPort(), self.app.client_service.client_repo)
+            results = ocr_srv.analyze_sales_image(b"dummy")
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0]["client_cedula"], "12345678")
+
+        # Test POST confirmation via web
+        self.client.post("/auth/login", data={"username": "admin", "password": "admin123"}, follow_redirects=True)
+        with self.app.app_context():
+            client = self.app.client_service.get_client_by_cedula("12345678")
+            data = {
+                "client_id": [str(client.id)],
+                "concepto": ["Almuerzo Confirmado"],
+                "monto": ["25000.0"],
+                "fecha_compra": ["2026-07-13"]
+            }
+            res = self.client.post("/purchases/ocr/confirm", data=data, follow_redirects=True)
+            self.assertEqual(res.status_code, 200)
+            purchases = self.app.purchase_service.get_purchases_by_client(client.id)
+            self.assertTrue(any(p.concepto == "Almuerzo Confirmado" for p in purchases))
 
 
 if __name__ == "__main__":

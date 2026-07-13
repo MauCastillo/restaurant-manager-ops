@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local data directory
+/Users/mao/Documents/Github/restaurant-manager-ops/data
+data/
