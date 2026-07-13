@@ -53,3 +53,13 @@ class PurchaseService(PurchaseServicePort):
             "total_compras": total_compras,
             "saldo_neto": saldo_neto
         }
+
+    def check_duplicate_purchase(self, client_id: int, fecha_compra: str, monto: float) -> bool:
+        """Check if a client already has a purchase on the same date with the exact same amount."""
+        purchases = self.purchase_repo.find_by_client_id(client_id)
+        target_fecha = fecha_compra.strip()
+        target_monto = float(monto)
+        for p in purchases:
+            if p.fecha_compra == target_fecha and abs(p.monto - target_monto) < 0.001:
+                return True
+        return False

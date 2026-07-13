@@ -6,6 +6,16 @@
     <title>{% block title %}Gestor de Clientes & Compras - Hexagonal Auth & OPS{% endblock %}</title>
     <meta name="description" content="Plataforma de gestión de clientes y compras basada en Arquitectura Hexagonal con administrador de seguridad de usuarios y sincronización de Consulta.html.">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('hexops_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Top Glass Navbar -->
@@ -27,13 +37,21 @@
                 {% endif %}
             </ul>
 
-            <div class="nav-user-badge">
+            <div class="nav-user-badge" style="display:flex; align-items:center; gap:0.6rem;">
+                <button type="button" id="themeToggleBtn" class="theme-toggle-btn" title="Alternar Modo Oscuro / Claro">
+                    <span id="themeToggleIcon">☀️</span>
+                    <span id="themeToggleLabel">Claro</span>
+                </button>
                 <span>👤 {{ current_user.username }}</span>
                 <span class="role-badge">{{ current_user.role }}</span>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm" style="margin-left:0.5rem;">Salir</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm" style="margin-left:0.3rem;">Salir</a>
             </div>
             {% else %}
-            <div class="nav-user-badge">
+            <div class="nav-user-badge" style="display:flex; align-items:center; gap:0.6rem;">
+                <button type="button" id="themeToggleBtn" class="theme-toggle-btn" title="Alternar Modo Oscuro / Claro">
+                    <span id="themeToggleIcon">☀️</span>
+                    <span id="themeToggleLabel">Claro</span>
+                </button>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">Iniciar Sesión</a>
             </div>
             {% endif %}

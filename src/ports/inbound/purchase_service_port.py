@@ -30,3 +30,8 @@ class PurchaseServicePort(ABC):
     def get_client_financial_summary(self, client_id: int) -> Dict[str, float]:
         """Return financial summary for a client: base discount value, total purchases, and net total."""
         pass
+
+    @abstractmethod
+    def check_duplicate_purchase(self, client_id: int, fecha_compra: str, monto: float) -> bool:
+        """Check if a client already has a purchase on the same date with the exact same amount."""
+        pass

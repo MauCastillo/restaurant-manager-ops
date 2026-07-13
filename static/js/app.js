@@ -110,6 +110,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span style="cursor:pointer; opacity:0.8;" onclick="this.parentElement.style.display='none'; document.querySelector('input[name=\\'client_id\\']').value='';">Cambiar</span>
                 `;
             }
+
+            const form = wrapper.closest("form");
+            if (form && form.hasAttribute("data-auto-submit")) {
+                form.submit();
+            }
         }
 
         input.addEventListener("input", (e) => {
@@ -168,4 +173,144 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // 5. Persistent Date Selector & One-Click Calendar Picker
+    const allDateInputs = document.querySelectorAll("input[type='date']");
+    allDateInputs.forEach((dateInput) => {
+        dateInput.addEventListener("click", () => {
+            try {
+                if (typeof dateInput.showPicker === "function") {
+                    dateInput.showPicker();
+                }
+            } catch (err) {
+                // Ignore if browser restricts showPicker invocation
+            }
+        });
+    });
+
+    const persistentDateInputs = document.querySelectorAll(".persistent-date-input");
+    const lastDate = localStorage.getItem("last_fecha_compra");
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    persistentDateInputs.forEach((dateInput) => {
+        dateInput.value = lastDate || todayStr;
+        dateInput.addEventListener("change", (e) => {
+            if (e.target.value) {
+                localStorage.setItem("last_fecha_compra", e.target.value);
+            }
+        });
+    });
+
+    // 6. Check if we should reopen the createPurchaseModal for consecutive entries
+    const shouldReopen = localStorage.getItem("reopen_purchase_modal");
+    if (shouldReopen === "1") {
+        const modal = document.getElementById("createPurchaseModal");
+        if (modal) {
+            modal.classList.add("active");
+            const searchInput = modal.querySelector(".autocomplete-input");
+            if (searchInput) {
+                setTimeout(() => searchInput.focus(), 100);
+            }
+        }
+    }
+
+    // 7. Duplicate Purchase Detection & Form Submission Handler
+    const purchaseForms = document.querySelectorAll("[data-purchase-form]");
+    purchaseForms.forEach((form) => {
+        const forceDupInput = form.querySelector("input[name='force_duplicate']");
+        const dupBanner = form.querySelector(".duplicate-alert-banner");
+        const dupMsg = form.querySelector(".duplicate-msg");
+        const cancelBtn = form.querySelector(".cancel-dup-btn");
+        const confirmBtn = form.querySelector(".confirm-dup-btn");
+        const keepOpenCheckbox = form.querySelector(".keep-open-checkbox");
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener("click", () => {
+                if (dupBanner) dupBanner.style.display = "none";
+            });
+        }
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener("click", () => {
+                if (forceDupInput) forceDupInput.value = "1";
+                handleKeepOpenPreference();
+                form.submit();
+            });
+        }
+
+        function handleKeepOpenPreference() {
+            if (keepOpenCheckbox && keepOpenCheckbox.checked) {
+                localStorage.setItem("reopen_purchase_modal", "1");
+            } else {
+                localStorage.removeItem("reopen_purchase_modal");
+            }
+        }
+
+        form.addEventListener("submit", async (e) => {
+            if (forceDupInput && forceDupInput.value === "1") {
+                handleKeepOpenPreference();
+                return; // Let regular submit proceed
+            }
+
+            e.preventDefault();
+
+            const clientId = form.querySelector("input[name='client_id']").value;
+            const fechaCompra = form.querySelector("input[name='fecha_compra']").value;
+            const monto = form.querySelector("input[name='monto']").value;
+
+            // Persist the date on submit
+            if (fechaCompra) {
+                localStorage.setItem("last_fecha_compra", fechaCompra);
+            }
+
+            try {
+                const res = await fetch(`/purchases/api/check_duplicate?client_id=${encodeURIComponent(clientId)}&fecha_compra=${encodeURIComponent(fechaCompra)}&monto=${encodeURIComponent(monto)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.is_duplicate) {
+                        if (dupMsg) {
+                            dupMsg.textContent = `Atención: El cliente ya tiene un registro guardado en la fecha ${fechaCompra} por el mismo valor ($${parseFloat(monto).toFixed(2)}). Puede ser un registro duplicado por error. ¿Deseas guardarlo de todos modos?`;
+                        }
+                        if (dupBanner) dupBanner.style.display = "block";
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error("Error consultando duplicado:", err);
+            }
+
+            // Not duplicate or error checking -> submit normally
+            handleKeepOpenPreference();
+            form.submit();
+        });
+    });
+
+    // 8. Dark / Light Theme Switcher
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
+    const themeIcon = document.getElementById("themeToggleIcon");
+    const themeLabel = document.getElementById("themeToggleLabel");
+
+    function updateThemeUI() {
+        const isLight = document.documentElement.getAttribute("data-theme") === "light";
+        if (themeIcon && themeLabel) {
+            themeIcon.textContent = isLight ? "🌙" : "☀️";
+            themeLabel.textContent = isLight ? "Oscuro" : "Claro";
+        }
+    }
+
+    updateThemeUI();
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", () => {
+            const isLight = document.documentElement.getAttribute("data-theme") === "light";
+            if (isLight) {
+                document.documentElement.removeAttribute("data-theme");
+                localStorage.setItem("hexops_theme", "dark");
+            } else {
+                document.documentElement.setAttribute("data-theme", "light");
+                localStorage.setItem("hexops_theme", "light");
+            }
+            updateThemeUI();
+        });
+    }
 });

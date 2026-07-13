@@ -40,6 +40,23 @@ Plataforma web construida en **Python Flask** siguiendo los principios de **Arqu
    - Estructura de columnas y estilo idénticos al archivo de referencia (`Nombre`, `Cedula`, `Porceso de Desempeno`, `Valor a Descontar`).
    - Módulo de envío directo por correo electrónico desde cuentas **GMAIL** con cuerpo, asunto y estructura idéntica al archivo de referencia `.eml`.
 
+7. **Buscador Autocompletable Inteligente para Asignar Compras/Ventas**:
+   - Reemplazo de selectores estáticos por un componente de búsqueda interactiva instantánea (`GET /clients/api/search?q=andres`).
+   - Permite escribir fragmentos de nombre o cédula (ej. `andres`) para sugerir opciones al momento y navegar con flechas del teclado o clic.
+
+8. **Registro Rápido Consecutivo y Prevención de Duplicados**:
+   - **Persistencia Inteligente de Fecha (`localStorage`)**: El campo *Fecha de Compra* conserva automáticamente la última fecha utilizada para registrar a varias personas el mismo día sin tener que volver a seleccionarla.
+   - **Valor por Defecto**: El campo *Concepto / Detalle* incluye `"Alimentación"` por defecto.
+   - **Detección Preventiva de Duplicados (`GET /purchases/api/check_duplicate`)**: Si se intenta registrar al mismo cliente en la misma fecha y por el mismo monto, el sistema muestra una alerta preventiva de confirmación para evitar errores humanos antes de guardar.
+   - **Modo Continuo**: Opción para mantener el modal abierto automáticamente y registrar compras/consumos de forma consecutiva e ininterrumpida.
+
+9. **Buscador e Historial Cronológico de Compras por Cliente Único**:
+   - Permite filtrar al instante todas las transacciones de un cliente específico escribiendo su nombre o cédula (`GET /purchases/?client_id=ID`).
+   - Muestra una tarjeta de resumen superior con el total acumulado, valor base a descontar y una cronología detallada con cada fecha de compra y monto registrado.
+
+10. **Alternador de Tema Modo Oscuro / Claro**:
+    - Botón en la barra de navegación que permite alternar entre el modo oscuro glassmorphism y un modo claro de alto contraste, persistiendo la preferencia en `localStorage`.
+
 ---
 
 ## 🏗️ Estructura del Proyecto

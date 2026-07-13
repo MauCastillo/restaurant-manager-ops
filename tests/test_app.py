@@ -107,6 +107,50 @@ class TestHexagonalApp(unittest.TestCase):
         names = [c["nombre"].lower() for c in data]
         self.assertTrue(any("andres" in n for n in names))
 
+    def test_07_duplicate_purchase_detection(self):
+        with self.app.app_context():
+            clients = self.app.client_service.list_clients()
+            client = clients[0]
+            # Register a purchase
+            self.app.purchase_service.register_purchase(
+                client_id=client.id,
+                concepto="Alimentación",
+                monto=15000.0,
+                fecha_compra="2026-07-13"
+            )
+
+            # Check service directly
+            is_dup = self.app.purchase_service.check_duplicate_purchase(client.id, "2026-07-13", 15000.0)
+            self.assertTrue(is_dup)
+
+            is_not_dup = self.app.purchase_service.check_duplicate_purchase(client.id, "2026-07-13", 25000.0)
+            self.assertFalse(is_not_dup)
+
+        # Check via API endpoint
+        self.client.post("/auth/login", data={"username": "admin", "password": "admin123"}, follow_redirects=True)
+        res = self.client.get(f"/purchases/api/check_duplicate?client_id={client.id}&fecha_compra=2026-07-13&monto=15000")
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.get_json()["is_duplicate"])
+
+    def test_08_single_client_purchase_history_filter(self):
+        self.client.post("/auth/login", data={"username": "admin", "password": "admin123"}, follow_redirects=True)
+        with self.app.app_context():
+            client = self.app.client_service.list_clients()[0]
+            self.app.purchase_service.register_purchase(
+                client_id=client.id,
+                concepto="Alimentación",
+                monto=18500.0,
+                fecha_compra="2026-07-13"
+            )
+            client_id = client.id
+            client_nombre = client.nombre
+
+        res = self.client.get(f"/purchases/?client_id={client_id}")
+        self.assertEqual(res.status_code, 200)
+        html = res.data.decode("utf-8")
+        self.assertIn("CRONOLOGÍA DE FECHAS Y VALORES REGISTRADOS", html)
+        self.assertIn("18,500.00", html)
+
 
 if __name__ == "__main__":
     unittest.main()
