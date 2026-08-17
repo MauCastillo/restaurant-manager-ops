@@ -283,24 +283,32 @@
             <h3 class="modal-title">✨ Escanear Notas Manuscritas (Gemini AI)</h3>
             <button class="modal-close" data-close-modal>×</button>
         </div>
-        <form method="POST" action="{{ url_for('purchases.analyze_ocr_image') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('purchases.analyze_ocr_image') }}" enctype="multipart/form-data" id="ocrUploadForm" data-ocr-processing-form>
             <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-                Sube una fotografía de las notas o recibos escritos a mano. La IA de Google Gemini extraerá cada renglón y te mostrará una vista previa editable para confirmar antes de guardarlo.
+                Sube una o varias fotografías de las notas o recibos escritos a mano. La IA de Google Gemini extraerá cada renglón de todas las imágenes y te mostrará una vista previa editable para confirmar antes de guardarlo.
             </p>
             <div class="form-group">
-                <label class="form-label" style="font-weight: 700;">Seleccionar Fotografía (.jpg, .png)</label>
-                <input type="file" name="image" class="form-control" accept="image/*" required style="padding: 0.75rem;">
+                <label class="form-label" style="font-weight: 700;">Seleccionar Fotografía(s) (.jpg, .png)</label>
+                <input type="file" name="image" id="ocrImageInput" class="form-control" accept="image/*" multiple required style="padding: 0.75rem;">
+                <div id="ocrFileCountHint" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; display:none;"></div>
             </div>
             <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md); padding: 0.8rem 1rem; margin-top: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--accent-secondary);">
-                💡 <strong>Ejemplo compatible:</strong> Imágenes de apuntes diarios o listas como las ubicadas en <code>/Downloads/input/</code>.
+                💡 <strong>Ejemplo compatible:</strong> Imágenes de apuntes diarios o listas como las ubicadas en <code>/Downloads/input/</code>. Puedes seleccionar varias imágenes a la vez.
             </div>
             <div style="display:flex; justify-content:flex-end; gap: 0.75rem;">
                 <button type="button" class="btn btn-outline" data-close-modal>Cancelar</button>
-                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                <button type="submit" class="btn btn-primary" id="ocrSubmitBtn" style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
                     🔍 Analizar con Inteligencia Artificial
                 </button>
             </div>
         </form>
+
+        <!-- Processing Overlay: shown while the AI OCR analysis is running -->
+        <div class="processing-overlay" id="ocrProcessingOverlay">
+            <div class="spinner"></div>
+            <div class="processing-title" id="ocrProcessingTitle">Procesando con Inteligencia Artificial...</div>
+            <div class="processing-subtitle" id="ocrProcessingSubtitle">Esto puede tardar unos segundos.</div>
+        </div>
     </div>
 </div>
 {% endblock %}

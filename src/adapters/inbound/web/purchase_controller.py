@@ -124,35 +124,50 @@ def check_duplicate():
 @purchase_bp.route("/ocr/analyze", methods=["POST"])
 @login_required
 def analyze_ocr_image():
-    """Receive uploaded handwritten image, analyze via Gemini AI OCR, and render preview screen."""
+    """Receive one or more uploaded handwritten images, analyze each via Gemini AI OCR, and render a combined preview screen."""
     import base64
-    image_file = request.files.get("image")
-    if not image_file or image_file.filename == "":
-        flash("Por favor selecciona o toma una fotografía antes de analizar.", "danger")
+    image_files = [f for f in request.files.getlist("image") if f and f.filename]
+    if not image_files:
+        flash("Por favor selecciona o toma al menos una fotografía antes de analizar.", "danger")
         return redirect(url_for("purchases.list_purchases"))
 
-    try:
-        image_bytes = image_file.read()
-        mime_type = image_file.content_type or "image/jpeg"
-        image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-        image_data_uri = f"data:{mime_type};base64,{image_b64}"
+    ocr_service = current_app.ocr_service
+    client_service = current_app.client_service
+    all_clients = client_service.list_clients()
 
-        ocr_service = current_app.ocr_service
-        extracted_rows = ocr_service.analyze_sales_image(image_bytes, mime_type)
+    images = []
+    extracted_rows = []
+    failed_filenames = []
 
-        client_service = current_app.client_service
-        all_clients = client_service.list_clients()
+    for image_file in image_files:
+        try:
+            image_bytes = image_file.read()
+            mime_type = image_file.content_type or "image/jpeg"
+            image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+            image_data_uri = f"data:{mime_type};base64,{image_b64}"
 
-        return render_template(
-            "purchases/ocr_preview.html",
-            extracted_rows=extracted_rows,
-            image_data_uri=image_data_uri,
-            all_clients=all_clients,
-            image_filename=image_file.filename
-        )
-    except Exception as e:
-        flash(f"Error al analizar la imagen con Inteligencia Artificial: {str(e)}", "danger")
+            rows = ocr_service.analyze_sales_image(image_bytes, mime_type)
+            for row in rows:
+                row["index"] = len(extracted_rows) + 1
+                extracted_rows.append(row)
+
+            images.append({"filename": image_file.filename, "data_uri": image_data_uri})
+        except Exception:
+            failed_filenames.append(image_file.filename)
+
+    if not images:
+        flash("Error al analizar las imágenes con Inteligencia Artificial. Intenta nuevamente.", "danger")
         return redirect(url_for("purchases.list_purchases"))
+
+    if failed_filenames:
+        flash(f"⚠️ No se pudieron analizar {len(failed_filenames)} imagen(es): {', '.join(failed_filenames)}. Las demás sí se procesaron correctamente.", "warning")
+
+    return render_template(
+        "purchases/ocr_preview.html",
+        extracted_rows=extracted_rows,
+        images=images,
+        all_clients=all_clients
+    )
 
 
 @purchase_bp.route("/ocr/confirm", methods=["POST"])

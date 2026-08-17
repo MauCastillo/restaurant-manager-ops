@@ -285,7 +285,46 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // 8. Dark / Light Theme Switcher
+    // 8. OCR Multi-Image Upload: file count hint + "processing" overlay while Gemini AI works
+    const ocrForm = document.querySelector("[data-ocr-processing-form]");
+    if (ocrForm) {
+        const fileInput = ocrForm.querySelector("#ocrImageInput");
+        const fileCountHint = ocrForm.querySelector("#ocrFileCountHint");
+        const submitBtn = ocrForm.querySelector("#ocrSubmitBtn");
+        const overlay = document.getElementById("ocrProcessingOverlay");
+        const overlaySubtitle = document.getElementById("ocrProcessingSubtitle");
+
+        if (fileInput && fileCountHint) {
+            fileInput.addEventListener("change", () => {
+                const count = fileInput.files.length;
+                if (count > 1) {
+                    fileCountHint.style.display = "block";
+                    fileCountHint.textContent = `📎 ${count} imágenes seleccionadas`;
+                } else {
+                    fileCountHint.style.display = "none";
+                }
+            });
+        }
+
+        ocrForm.addEventListener("submit", () => {
+            const count = fileInput ? fileInput.files.length : 1;
+
+            if (overlaySubtitle) {
+                overlaySubtitle.textContent = count > 1
+                    ? `Analizando ${count} imágenes con IA. Esto puede tardar varios segundos, ya que cada imagen se procesa una por una. No cierres ni recargues esta ventana.`
+                    : "Analizando tu imagen con IA. Esto puede tardar unos segundos. No cierres ni recargues esta ventana.";
+            }
+
+            if (overlay) overlay.classList.add("active");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "⏳ Procesando...";
+            }
+            // Let the native form submission proceed (full page navigation to the preview screen)
+        });
+    }
+
+    // 9. Dark / Light Theme Switcher
     const themeToggleBtn = document.getElementById("themeToggleBtn");
     const themeIcon = document.getElementById("themeToggleIcon");
     const themeLabel = document.getElementById("themeToggleLabel");

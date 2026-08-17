@@ -26,14 +26,21 @@
     </style>
     <div style="display: grid; grid-template-columns: minmax(300px, 34%) minmax(0, 66%); gap: 1.5rem; align-items: start;">
         
-        <!-- Columna Izquierda: Fotografía Manuscrita -->
+        <!-- Columna Izquierda: Fotografía(s) Manuscrita(s) -->
         <div class="glass-card" style="position: sticky; top: 1.5rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">📸 Fotografía Original Subida</h3>
-                <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">{{ image_filename }}</span>
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #fff;">📸 Fotografía{{ 's' if images|length != 1 else '' }} Original{{ 'es' if images|length != 1 else '' }} Subida{{ 's' if images|length != 1 else '' }}</h3>
+                <span class="badge badge-cyan" style="font-size: 0.78rem;">{{ images|length }} imagen{{ 'es' if images|length != 1 else '' }}</span>
             </div>
-            <div style="border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); overflow: hidden; max-height: 580px; background: #0b0f19; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ image_data_uri }}" alt="Fotografía manuscrita subida" style="max-width: 100%; max-height: 560px; object-fit: contain;">
+            <div style="display: flex; flex-direction: column; gap: 1.1rem; max-height: 580px; overflow-y: auto;">
+                {% for img in images %}
+                <div>
+                    <div class="mono" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem;">{{ img.filename }}</div>
+                    <div style="border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); overflow: hidden; background: #0b0f19; display: flex; align-items: center; justify-content: center;">
+                        <img src="{{ img.data_uri }}" alt="Fotografía manuscrita subida" style="max-width: 100%; max-height: 400px; object-fit: contain;">
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.75rem;">
                 💡 Compara los renglones del papel con la tabla de la derecha y realiza cualquier ajuste de cliente, monto o fecha.
