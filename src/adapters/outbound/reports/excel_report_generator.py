@@ -43,7 +43,7 @@ class OpenpyxlReportGenerator(ReportGeneratorPort):
                 cell.border = thin_border
 
                 if key == "valor_a_descontar":
-                    cell.number_format = '"$"#,##0.00'
+                    cell.number_format = '"$"#,##0'
                     cell.alignment = Alignment(horizontal="right")
                 elif key == "cedula":
                     cell.number_format = '@'
